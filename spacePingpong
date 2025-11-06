@@ -1,0 +1,484 @@
+import simplegui
+import random
+import math
+
+WIDTH=600
+HEIGHT=600
+started=True
+def distance(p,q):
+    dist=((p[0]-q[0])**2+(p[1]-q[1])**2)**0.5
+    return distance
+def grid_vertical(base_grid,block_posx,rango):
+    current_row=[[i,block_posx] for i in range(rango)]
+    for val in current_row:
+        if base_grid[val[0]][val[1]]==1:
+            base_grid[val[0]][val[1]]=2
+class ImageInfo:
+    def __init__(self, center, size, radius = 0, lifespan = None, animated = False):
+        self.center = center
+        self.size = size
+        self.radius = radius
+        if lifespan:
+            self.lifespan = lifespan
+        else:
+            self.lifespan = float('inf')
+        self.animated = animated
+
+    def get_center(self):
+        return self.center
+
+    def get_size(self):
+        return self.size
+
+    def get_radius(self):
+        return self.radius
+
+    def get_lifespan(self):
+        return self.lifespan
+
+    def get_animated(self):
+        return self.animated  
+splash_info = ImageInfo([200, 150], [400, 300])
+splash_image = simplegui.load_image("http://commondatastorage.googleapis.com/codeskulptor-assets/lathrop/splash.png")
+class Wallprueba:
+    def __init__(self,width,height):
+        self.width=width
+        self.height=height
+        self.pos=[100,100]
+    def draw_wallprueba(self,canvas):
+        canvas.draw_polyline([[self.pos[0],self.pos[1]],[self.pos[0]+self.width,self.pos[1]],[self.pos[0]+self.width,self.pos[1]+self.height],[self.pos[0],self.pos[1]+self.height],[self.pos[0],self.pos[1]]],12,"Red")
+
+      
+class Wall:
+    def __init__(self,rows,columns,long_cell):
+        self.rows=rows
+        self.columns=columns
+        self.long_cell=long_cell
+        self.color="Green"
+        self.grid=[[0 for column in range(self.columns)]
+                        for row in range(self.rows)]
+        self.new_blocks()
+    def update_wall(self):
+        new_redblock=[0,0]
+        if self.block_collide(Juego.ball)[0]==True:
+            new_redblock=self.block_collide(Juego.ball)[1]
+            
+        grid_vertical(self.grid,new_redblock[1],self.columns)
+#        self.grid[new_redblock[0]][new_redblock[1]]=2
+    def change_state(self,current_block):
+        if current_block.state == 0:
+            pass
+    def choose_blocks(self,row):
+        pick=0
+        current_row=[i for i in self.grid[row]]
+        while (pick<=2):
+            indices=range(len(current_row))
+            current_choice=random.choice(indices)
+            if current_row[current_choice]!=1:
+                current_row[current_choice]=1
+                pick+=1
+            elif current_row[current_choice]==1:
+                current_indices=[]
+                for i in indices:
+                    if current_row[i]==1:
+                        current_indices.append(i)
+                for i in current_indices:
+                    indice_to_remove=random.choice
+                    indices.remove(i)
+                new_choice=random.choice(indices)
+                current_row[new_choice]=1
+                pick+=1
+        self.grid[row]=current_row
+    def new_blocks(self):
+        self.grid=[[0 for column in range(self.columns)]
+                        for row in range(self.rows)]
+        for row in range(4,len(self.grid)-4):
+            self.choose_blocks(row)
+    def there_is_block(self):
+        list_blocks=[]
+        for row in range(self.rows):
+            for col in range(self.columns):
+                if self.grid[row][col]==1:
+                    list_blocks.append([row,col])
+        
+        return list_blocks
+    def block_collide(self,objecto):
+        for block in self.there_is_block():
+            if block[1]*self.long_cell<=objecto.pos[0]<=block[1]*self.long_cell+self.long_cell and objecto.pos[1]-Juego.ball.radius==block[0]*self.long_cell+self.long_cell:
+                return (True,block)
+            elif block[1]*self.long_cell<=objecto.pos[0]<=block[1]*self.long_cell+self.long_cell and objecto.pos[1]+Juego.ball.radius==block[0]*self.long_cell:
+                return (True,block)
+        return (False,block)
+    
+    def block_collide1(self,object):
+        for block in self.there_is_block():
+            if block[1]*self.long_cell<=object.pos[0]<=block[1]*self.long_cell+self.long_cell and object.pos[1]+Juego.ball.radius==block[0]*self.long_cell:
+                return (True,block)
+        return (False,block)
+                
+    def __str__(self):
+        new_list=[]
+        for row in range(self.rows):
+            for col in range(self.columns):
+                if self.grid[row][col]==1:
+                    new_list.append([row*50,col*50])
+        return str(new_list)
+        
+        return str(new_list)
+    def draw_wall(self,canvas):
+        for row in range(self.rows):
+            for col in range(self.columns):
+                if self.grid[row][col]==1: 
+                    canvas.draw_polygon([[col*self.long_cell,row*self.long_cell],[col*self.long_cell,row*self.long_cell+self.long_cell],[col*self.long_cell+self.long_cell,row*self.long_cell+self.long_cell],[col*self.long_cell+self.long_cell,row*self.long_cell]],5,"Green","Red")
+                elif self.grid[row][col]==2:
+                    canvas.draw_polygon([[col*self.long_cell,row*self.long_cell],[col*self.long_cell,row*self.long_cell+self.long_cell],[col*self.long_cell+self.long_cell,row*self.long_cell+self.long_cell],[col*self.long_cell+self.long_cell,row*self.long_cell]],5,"Yellow","Red")
+class Paddle:
+    def __init__(self,pos,long,vel):
+        self.pos=pos
+        self.long=long
+        self.espesor=20
+        self.vel=vel
+        self.pcvel=3
+        self.barrier=3
+        self.list_bullet=set([])
+        self.lives=3
+        
+    def reduce_lives(self):
+        self.lives-=1
+        
+    def collide_object(self,objecto,radius):
+        if self.pos[0]<objecto.pos[0]<self.pos[0]+self.long and objecto.pos[1]+radius==self.pos[1]:
+            return True
+        return False
+    def collide_object1(self,objecto,radius):
+        if self.pos[0]<objecto.pos[0]<self.pos[0]+self.long and objecto.pos[1]-radius==self.pos[1]+self.espesor:
+            return True
+        return False
+    def collide_bullets_paddle(self):
+        new_list=self.list_bullet.copy()
+        for bullet in new_list:
+            if self.collide_object(bullet,bullet.radius):
+                print "shoot"
+                self.lives-=1
+                self.list_bullet.remove(bullet)
+#        if len(new_list)>len(self.list_bullet):
+
+    def collide_bullets_paddle1(self):
+        new_list=self.list_bullet.copy()
+        for bullet in new_list:
+            if self.collide_object1(bullet,bullet.radius):
+                print "shooting"
+                self.lives-=1
+                self.list_bullet.remove(bullet)
+#        if len(new_list)>len(self.list_bullet):
+
+        
+    def update_paddle_lives(self,bullet):
+        if self.collide_object(bullet,bullet.radius):
+            self.lives-=1
+        return self.lives
+    def update_paddle_lives1(self,bullet):
+        if self.collide_object1(bullet,bullet.radius):
+            self.lives-=1
+        return self.lives
+    def move_pc(self):
+
+        self.pos[0]+=self.pcvel
+#        if self.is_inside()==False:
+#            vel*=-1
+        if self.pos[0]+self.long>=WIDTH:
+            self.pcvel*=-1
+        elif self.pos[0]<0:
+            self.pcvel*=-1
+        
+
+    def get_pos(self):
+        return self.pos
+    def get_long(self):
+        return self.long
+    def delete_bullet_collide(self):
+        remove_list=[]
+        lista_bullet=list(self.list_bullet)
+        for idx in range(len(self.list_bullet)):
+            bloque=Juego.wall.block_collide(lista_bullet[idx])[1]
+            if Juego.wall.block_collide(lista_bullet[idx])[0]==True and Juego.wall.grid[bloque[0]][bloque[1]]==1:
+#                self.list_bullet.pop(idx)
+                remove_list.append(lista_bullet[idx])
+        for idx in range(len(remove_list)):
+            self.list_bullet.remove(remove_list[idx])
+    def delete_bullet_collide1(self):
+        remove_list=[]
+        lista_bullet=list(self.list_bullet)
+        for idx in range(len(self.list_bullet)):
+            if Juego.wall.block_collide1(lista_bullet[idx])[0]:
+                remove_list.append(lista_bullet[idx])
+        for idx in range(len(remove_list)):
+            self.list_bullet.remove(remove_list[idx])
+            
+    
+    def shout_bullet(self):
+        new_bullet_left=Ammo([self.pos[0],self.pos[1]-50],2)
+        self.list_bullet.add(new_bullet_left)
+
+    def update_pos(self):
+        self.pos[0]+=self.vel
+        if self.is_inside()==False:
+            self.vel*=-1
+        self.delete_bullet_collide()
+    def update_pos1(self):
+        self.pos[0]+=self.vel
+        if self.is_inside()==False:
+            self.vel*=-1
+        self.delete_bullet_collide1()     
+            
+    def is_inside(self):
+        
+        if self.pos[0]+self.long<WIDTH and self.pos[0]>0:
+            return True
+        return False
+    def move_left(self):
+        self.vel=-2
+        if self.is_inside()==False:
+            self.vel*=-2
+            
+    def move_right(self):
+        self.vel=+2
+        if self.is_inside()==False:
+            self.vel*=-2
+    def draw_paddle(self,canvas):
+        canvas.draw_polygon([[self.pos[0],self.pos[1]],[self.pos[0]+self.long,self.pos[1]],[self.pos[0]+self.long,self.pos[1]+self.espesor],[self.pos[0],self.pos[1]+self.espesor]],12,"Green")
+        canvas.draw_line([self.pos[0]-5,self.pos[1]],[self.pos[0]-5,self.pos[1]-50],10,"Yellow")
+        canvas.draw_line([self.pos[0]+self.long+5,self.pos[1]],[self.pos[0]+self.long+5,self.pos[1]-50],10,"Yellow")
+        color=["Blue","Green","White"]
+        for i in range(1,4):
+            canvas.draw_line([self.get_pos()[0],self.get_pos()[1]-7*i],[self.get_pos()[0]+self.long,self.get_pos()[1]-7*i],10,color[i-1])
+    def draw_paddle1(self,canvas):
+        canvas.draw_polygon([[self.pos[0],self.pos[1]],[self.pos[0]+self.long,self.pos[1]],[self.pos[0]+self.long,self.pos[1]+self.espesor],[self.pos[0],self.pos[1]+self.espesor]],12,"Green")
+        canvas.draw_line([self.pos[0]-5,self.pos[1]],[self.pos[0]-5,self.pos[1]+50],10,"Yellow")
+        canvas.draw_line([self.pos[0]+self.long+5,self.pos[1]],[self.pos[0]+self.long+5,self.pos[1]+50],10,"Yellow")
+        color=["Green","Blue","Red"]
+        for i in range(1,4):
+            canvas.draw_line([self.get_pos()[0],self.get_pos()[1]+7*i],[self.get_pos()[0]+self.long,self.get_pos()[1]+7*i],10,color[i-1])
+class Ball:
+    def __init__(self,pos,radius):
+        self.pos=pos
+        self.radius=radius
+        self.vel=1
+        self.dirx=1
+        self.diry=1
+        self.dir=[self.dirx,self.diry]
+    def __str__(self):
+        return str(self.pos)
+    def update_pos1(self):
+        self.pos[0]+=self.dir[0]*self.vel
+        self.pos[1]+=self.dir[1]*self.vel
+        if self.is_insidex()==False:
+            self.dir[0]*=-1
+        if self.is_insidey()==False:
+            self.dir[1]*=-1
+        if (Juego.wallprueba.pos[0]<=self.pos[0]<=Juego.wallprueba.pos[0]+Juego.wallprueba.width) and (self.pos[1]+self.radius==Juego.wallprueba.pos[1] or self.pos[1]-self.radius==Juego.wallprueba.pos[1]+Juego.wallprueba.height):
+            self.dir[1]*=-1
+        if (Juego.wallprueba.pos[1]<=self.pos[1]<=Juego.wallprueba.pos[1]+Juego.wallprueba.height) and (self.pos[0]+self.radius==Juego.wallprueba.pos[0] or self.pos[0]-self.radius==Juego.wallprueba.pos[0]+Juego.wallprueba.width):
+            self.dir[0]*=-1
+
+    
+    def update_pos(self):
+        self.pos[0]+=self.dir[0]*self.vel
+        self.pos[1]+=self.dir[1]*self.vel
+        if self.is_insidex()==False:
+            self.dir[0]*=-1
+        if self.is_insidey()==False:
+            self.dir[1]*=-1
+        
+
+                
+        for block in Juego.wall.there_is_block():
+            if Juego.wall.grid[block[0]][block[1]]==1:
+                if (block[1]*Juego.wall.long_cell<=self.pos[0]<=block[1]*Juego.wall.long_cell+Juego.wall.long_cell) and (self.pos[1]+self.radius==block[0]*Juego.wall.long_cell or self.pos[1]-self.radius==block[0]*Juego.wall.long_cell+Juego.wall.long_cell):
+                    self.dir[1]*=-1
+                if (block[0]*Juego.wall.long_cell<=self.pos[1]<=block[0]*Juego.wall.long_cell+Juego.wall.long_cell) and (self.pos[0]+self.radius==block[1]*Juego.wall.long_cell or self.pos[0]-self.radius==block[1]*Juego.wall.long_cell+Juego.wall.long_cell):
+                    self.dir[0]*=-1
+
+        
+            
+        
+
+    def ball_hits_rocks(self,bloque,lado_bloque):
+        closest_x=max(bloque[1]*lado_bloque,min(self.pos[0],bloque[1]+lado_bloque))
+        closest_y=max(bloque[0]*lado_bloque,min(self.pos[1],bloque[0]+lado_bloque))
+        
+        dx = self.pos[0]-closest_x
+        dy = self.pos[1]-closest_y
+        
+        distancia=(dx**2+dy**2)**0.5
+        
+        if distancia<=self.radius:
+            if abs(dx)>abs(dy):
+                self.dir[0]*=-1
+            else:
+                self.dir[1]*=-1
+
+            
+    def is_colliding_block(self):
+        bloques=Juego.wall.there_is_block()
+        list_bloques=[]
+        for block in bloques:
+            if (self.pos[0]+self.radius<=block[1]*Juego.wall.long_cell or self.pos[0]-self.radius>=block[1]*Juego.wall.long_cell+Juego.wall.long_cell) and (self.pos[1]+self.radius<=block[0]*Juego.wall.long_cell or self.pos[1]-self.radius>=block[0]*Juego.wall.long_cell+Juego.wall.long_cell):
+                list_bloques.append(0)
+            else:
+                list_bloques.append(1)
+        if 1 in list_bloques:
+            return False
+        return True
+    def is_colliding_blocky(self):
+        for block in Juego.wall.there_is_block():
+            min_distancex=max(self.pos[0],min(block[1],block[1]+Juego.wall.long_cell))
+            min_distancey=max(self.pos[1],min(block[0],block[0]+Juego.wall.long_cell))
+            dx=self.pos[0]-min_distancex
+            dy=self.pos[1]-min_distancey
+            distance=(dx**2+dy**2)**0.5
+            if distance==0:
+                return True
+        return False
+
+    def is_insidey(self):
+        if self.pos[1]-self.radius>0 and self.pos[1]+self.radius<HEIGHT:
+            return True
+        return False
+    def is_insidex(self):
+        if 0<self.pos[0]-self.radius and self.pos[0]+self.radius<WIDTH:
+            return True
+        return False
+    def is_bounce_wall(self):
+        if posx+radius<block[0]*self.wall.long_cell or posx-radius>block[0]*self.wall.long_cell+self.wall.long_cell or posy+radius<block[1]*self.wall.long_cell or posy-radius>block[1]*self.wall.long_cell+self.wall.long_cell:
+            return True
+        return False
+    def draw_ball(self,canvas):
+        canvas.draw_circle(self.pos,self.radius,5,"White","Blue")
+class Ammo:
+    def __init__(self,pos,vel):
+        self.pos=pos
+        self.vel=vel
+        self.radius=8
+        self.span=100
+    def life_span(self):
+        current_time=0
+        while current_time<self.span:
+            current_time+=1
+            return True
+    def update_bullet(self):
+        self.pos[1]-=self.vel
+        
+    def update_bullet1(self):
+        self.pos[1]+=self.vel
+    def bullet_collide(self,obj):
+        if obj.pos[0]<self.pos[0]<obj.pos[0]+obj.long and self.pos[1]+self.radius==obj.pos[1]:
+            return True
+        return False
+    
+    def draw_bullet(self,canvas):
+        canvas.draw_circle([self.pos[0],self.pos[1]],self.radius,4,"Blue")
+    
+class Game:
+    def __init__(self):
+        self.frame=simplegui.create_frame("pingballgame",WIDTH,HEIGHT)
+        self.timer=simplegui.create_timer(1000,self.timer_handler)
+        self.tick=0
+        self.started=True
+        
+        self.wall=Wall(HEIGHT//50,WIDTH//50,50)
+        self.wallprueba=Wallprueba(180,70)
+        self.paddle=Paddle([WIDTH//2,HEIGHT-20],80,0)
+        self.pcpaddle=Paddle([WIDTH//2,0],80,0)
+        self.ball=None
+        self.find_pos_ball()
+        if self.paddle.lives>=3:
+            self.init_game()
+        else:
+            self.started=False
+        
+    def init(self):
+        self.wall=Wall(HEIGHT//50,WIDTH//50,50)
+        self.wallprueba=Wallprueba(180,70)
+        self.paddle=Paddle([WIDTH//2,HEIGHT-20],80,0)
+        self.pcpaddle=Paddle([WIDTH//2,0],80,0)
+        self.ball=None
+        self.find_pos_ball()
+
+    def timer_handler(self):
+        self.tick+=1
+        self.pcpaddle.shout_bullet()
+        if self.tick%2==0:
+            self.pcpaddle.shout_bullet()
+            
+        if self.tick%15==0:
+            self.wall.new_blocks()
+        
+    def init_game(self):
+        
+        self.frame.set_keydown_handler(keydown)
+        self.frame.set_keyup_handler(keyup)
+        self.frame.set_draw_handler(draw)
+        self.timer.start()
+        self.frame.start()
+
+    def find_pos_ball(self):
+
+        radius=20
+        for block in self.wall.there_is_block():
+            posx=random.randrange(0,WIDTH,self.wall.long_cell)
+            posy=random.randrange(0,HEIGHT,self.wall.long_cell)
+
+            if posx+radius<block[0]*self.wall.long_cell or posx-radius>block[0]*self.wall.long_cell+self.wall.long_cell or posy+radius<block[1]*self.wall.long_cell or posy-radius>block[1]*self.wall.long_cell+self.wall.long_cell:
+                self.ball=Ball([posx,posy],radius)
+    def draw_game(self,canvas):
+        self.paddle.draw_paddle(canvas)
+        self.pcpaddle.draw_paddle1(canvas)
+        self.wall.draw_wall(canvas)
+#        if self.ball!=None:
+#            self.wall.update_wall()
+#        self.wallprueba.draw_wallprueba(canvas)
+        self.pcpaddle.move_pc()
+        self.paddle.update_pos()
+        self.pcpaddle.update_pos1()
+        if self.ball!=None:
+            self.wall.update_wall()
+            self.ball.draw_ball(canvas)
+            self.ball.update_pos()
+        for bullet in self.paddle.list_bullet:
+            if bullet.life_span()==True:
+                bullet.draw_bullet(canvas)
+                bullet.update_bullet()
+                self.paddle.update_paddle_lives(bullet)
+#            if bullet.collide_bullet(self.paddle.pos):
+#                self.paddle.reduce_lives()
+        for bullet in self.pcpaddle.list_bullet:
+            if bullet.life_span()==True:
+                bullet.draw_bullet(canvas)
+                bullet.update_bullet1()
+                self.pcpaddle.update_paddle_lives1(bullet)
+        if self.started==False:
+            canvas.draw_image(splash_image,splash_info.get_center(),splash_info.get_size(),[WIDTH/2,HEIGHT/2],splash_info.get_size()) 
+            
+        canvas.draw_text("paddle lives:"+" "+str(self.paddle.lives),[50,50],12,"Red")
+        canvas.draw_text("paddle lives:"+" "+str(self.pcpaddle.lives),[50,450],12,"Red")
+def keydown(key):
+    ace=0.2
+    if simplegui.KEY_MAP["left"]==key:
+        Juego.paddle.move_left()
+    if simplegui.KEY_MAP["right"]==key:
+        Juego.paddle.move_right()
+    if simplegui.KEY_MAP["space"]==key:
+#        while len(Juego.paddle.list_bullet)<=1:
+        Juego.paddle.shout_bullet()
+        print str(Juego.paddle.list_bullet)
+           
+def keyup(key):
+    if simplegui.KEY_MAP["left"]==key:
+        Juego.paddle.vel=0
+    if simplegui.KEY_MAP["right"]==key:
+        Juego.paddle.vel=0
+def draw(canvas):
+    Juego.draw_game(canvas)
+
+Juego=Game()
